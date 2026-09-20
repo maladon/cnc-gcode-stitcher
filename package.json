@@ -2,9 +2,9 @@
   "name": "cnc-gcode-editor",
   "version": "1.0.0",
   "description": "Drag-and-drop tool to combine G-code files and insert CNC tool-change commands",
-  "main": "src/index.html",
+  "main": "index.html",
   "scripts": {
-    "start": "npx serve src",
+    "start": "npx serve .",
     "test": "node test/run.js"
   },
   "license": "UNLICENSED"
