@@ -1,5 +1,7 @@
 # CNC G-code Stitcher
 
+**TL;DR:** [![Just gimme the darn app already](https://img.shields.io/badge/Just%20gimme%20the%20darn%20app%20already-2ea44f?style=for-the-badge)](https://maladon.github.io/cnc-gcode-stitcher/)
+
 A small, dependency-free browser tool for combining multiple single-operation
 G-code files (as exported by CAM software like Fusion 360) into one
 continuous program, with tool-change commands inserted automatically between
