@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CNC G-code Tool Change Combiner</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="warning-modal" class="modal-overlay" hidden>
+    <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="warning-modal-title">
+      <h2 id="warning-modal-title">Before you continue</h2>
+      <p>
+        This tool combines multiple G-code files into a single program and
+        automatically inserts tool-change commands, unit/positioning resets,
+        and — if enabled — rewrites travel moves. It has only been tested
+        with <strong>gsender</strong> on an <strong>Altmill 4x4 MK2</strong>
+        running grblHAL. Behavior with other senders, controllers,
+        post-processors, or machines has not been verified and may differ in
+        ways that could cause unexpected or unsafe motion.
+      </p>
+      <p>Before running any file this tool produces on real hardware, you should:</p>
+      <ul>
+        <li>Read through the entire generated file yourself, paying close attention to each tool change, feed rate, and retract height.</li>
+        <li>Confirm the tool numbers match what's actually loaded in your machine's tool holders.</li>
+        <li>If you enable the experimental "convert to fast travel moves" option, manually review every move it reclassified as a rapid before trusting it.</li>
+        <li>Run a dry run, air cut, or single-block step-through first, and keep a hand near the e-stop for the first real pass.</li>
+      </ul>
+      <p>
+        This tool is provided as-is, with no warranty that it produces
+        correct or safe G-code for your specific setup. Verifying every
+        file before it touches your machine is entirely your responsibility.
+      </p>
+      <label class="option-row">
+        <input type="checkbox" id="warning-agree-checkbox" />
+        I agree and will verify the G-code before proceeding
+      </label>
+      <div class="modal-actions">
+        <button id="warning-continue-btn" disabled>Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app">
+    <h1>CNC G-code Tool Change Combiner</h1>
+
+    <div class="top-row">
+      <div id="dropzone" title="Drop G-code files here to add them. Drag items in the list to set the order they'll run in.">
+        <p id="hint" class="hint">Drag &amp; drop G-code files here<br />(drag list items to reorder)</p>
+        <ul id="file-list"></ul>
+      </div>
+
+      <div class="side-controls">
+        <button id="process-btn" title="Combine the files above into one G-code program with tool-change commands inserted.">Process</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab-buttons" role="tablist">
+        <button class="tab-btn active" data-tab="result" role="tab" aria-selected="true" title="View the combined G-code produced by Process.">Result</button>
+        <button class="tab-btn" data-tab="options" role="tab" aria-selected="false" title="Configure how files are combined.">Options</button>
+        <button class="tab-btn" data-tab="instructions" role="tab" aria-selected="false" title="How to use this tool and what each option does.">Instructions</button>
+      </div>
+
+      <div class="tab-panel" id="tab-result" role="tabpanel">
+        <textarea id="output" spellcheck="false" placeholder="Combined G-code output will appear here..." title="Editable combined G-code output. Edit here before saving if needed."></textarea>
+
+        <div class="save-row">
+          <button id="save-btn" title="Download the text above as a .gcode file.">Save</button>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-options" role="tabpanel" hidden>
+        <label class="option-row" title="Only the first file keeps its full post-processor header (program name, tool note, units/plane setup). Later files start at their own operation instead of repeating it.">
+          <input type="checkbox" id="opt-strip-headers" checked />
+          Strip duplicate headers
+        </label>
+        <label class="option-row" title="Strips descriptive comments (tool notes, operation names, CAM disclaimers) from each file's body. The file-separator comments this tool adds are always kept.">
+          <input type="checkbox" id="opt-remove-comments" checked />
+          Remove extra comments
+        </label>
+        <label class="option-row" title="Experimental: restores travel moves that Fusion's Personal Use license throttled from G0 to G1 back to true rapids. Uses a conservative geometry-based rule; review the result before running it.">
+          <input type="checkbox" id="opt-convert-fast-travel" />
+          Convert to fast travel moves (experimental)
+        </label>
+
+        <div class="option-block" title="G-code inserted right after every tool change, one command per line. Defaults to G20/G90 to guard against a units mismatch during the tool-change pause.">
+          <label for="opt-insert-after-tool-change">Insert after tool change</label>
+          <textarea id="opt-insert-after-tool-change" spellcheck="false" rows="3">G20
+G90</textarea>
+        </div>
+      </div>
+
+      <div class="tab-panel instructions" id="tab-instructions" role="tabpanel" hidden>
+        <div class="notice">
+          This tool has only been tested with <strong>gsender</strong> on an
+          <strong>Altmill 4x4 MK2</strong> running grblHAL. Verify the combined
+          file carefully — ideally with an air-cut or a single-step-through —
+          before running it on your machine.
+        </div>
+
+        <h2>How it works</h2>
+        <ol>
+          <li>Drag your G-code files onto the box on the left, or click it to pick files. Each file should already contain the correct tool number for its own operation (whatever your CAM post-processor put there) — that's what this tool reads, it doesn't assign tool numbers itself.</li>
+          <li>Drag the entries in the list to set the order the files should run in.</li>
+          <li>Click <strong>Process</strong>. Each file's existing tool-select line (e.g. <code>T2</code>) gets <code>M6</code> appended to it so grblHAL actually performs the change, and the files are stitched into one continuous program with a single end-of-program block at the very end instead of one per file.</li>
+          <li>The result appears in the <strong>Result</strong> tab as editable text — check it over, then click <strong>Save</strong> to download it as a <code>.gcode</code> file.</li>
+        </ol>
+        <p>Your file list and option settings are remembered in this browser between visits, so you don't need to re-upload or re-configure every time.</p>
+
+        <h2>What the options do</h2>
+
+        <h3>Strip duplicate headers</h3>
+        <p>Post-processors write a header at the top of every file — program name, tool note, units/plane setup, and an initial retract. That's only correct once. With this on, only the first file keeps its header; every later file starts at its own operation comment instead of repeating the whole setup.</p>
+
+        <h3>Remove extra comments</h3>
+        <p>Strips descriptive, non-executable comments (tool notes, operation names, CAM disclaimers, etc.) from each file's body to keep the combined file smaller and easier to read. This never removes the file-separator comments this tool itself adds for traceability.</p>
+
+        <h3>Convert to fast travel moves (experimental)</h3>
+        <p>Fusion 360's Personal Use license silently downgrades non-cutting travel moves from a true rapid (<code>G0</code>) to a fed move (<code>G1</code>) with no new feedrate — so retracts and repositions crawl at your last cutting feedrate instead of moving quickly. This option tries to detect and restore those moves back to <code>G0</code>. It uses a conservative rule (only Z-only moves that retract upward, or X/Y-only moves made right after such a retract) and leaves every plunge and arc untouched — but it's a heuristic based on move geometry, not a true understanding of your toolpath, so it's marked experimental and defaults off. Review the converted moves before running the file.</p>
+
+        <h3>Insert after tool change</h3>
+        <p>G-code emitted right after every tool change, one command per line. Defaults to <code>G20</code> / <code>G90</code> (inches, absolute positioning) because grblHAL always reports machine position in millimeters during the tool-change pause — if that gets fed back into a move while units have drifted, the target can be off by 25.4x and trip a soft-limit alarm. Change this if your machine uses different units or needs other commands reasserted after a change.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="gcode-tool-change.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
