@@ -80,7 +80,7 @@ one-time modal the first time you open it.
    with one end-of-program block at the very end, instead of one per file.
 4. The result appears in the **Result** tab as editable plain text — review
    it, make any manual edits directly in the textarea if needed, then click
-   **Save** to download it as a `.gcode` file.
+   **Download** to download it as a `.gcode` file.
 
 Your file list and option settings are remembered in the browser
 (`localStorage`) between visits, so you don't have to re-upload or
