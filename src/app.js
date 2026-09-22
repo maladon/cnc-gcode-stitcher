@@ -133,8 +133,21 @@ function render() {
     name.className = "name";
     name.textContent = file.name;
 
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "remove-btn";
+    removeBtn.textContent = "✕";
+    removeBtn.setAttribute("aria-label", `Remove ${file.name}`);
+    removeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      files.splice(index, 1);
+      render();
+      saveState();
+    });
+
     li.appendChild(tag);
     li.appendChild(name);
+    li.appendChild(removeBtn);
 
     li.addEventListener("dragstart", (e) => {
       dragSrcIndex = index;
