@@ -6,6 +6,7 @@ const fileList = document.getElementById("file-list");
 const hint = document.getElementById("hint");
 const processBtn = document.getElementById("process-btn");
 const saveBtn = document.getElementById("save-btn");
+const filenameInput = document.getElementById("filename-input");
 const output = document.getElementById("output");
 const tabButtons = document.querySelectorAll(".tab-btn");
 const stripHeadersCheckbox = document.getElementById("opt-strip-headers");
@@ -17,6 +18,7 @@ const warningAgreeCheckbox = document.getElementById("warning-agree-checkbox");
 const warningContinueBtn = document.getElementById("warning-continue-btn");
 
 let dragSrcIndex = null;
+let filenameEdited = false;
 
 const STORAGE_KEY = "cnc-gcode-editor:state";
 const WARNING_AGREED_KEY = "cnc-gcode-editor:warning-agreed";
@@ -55,6 +57,8 @@ function saveState() {
       convertToFastTravel: convertFastTravelCheckbox.checked,
       insertAfterToolChange: insertAfterToolChangeInput.value,
     },
+    filename: filenameInput.value,
+    filenameEdited,
     files,
   };
   try {
@@ -92,6 +96,11 @@ function loadState() {
   if (Array.isArray(state.files)) {
     files.push(...state.files);
   }
+
+  if (state.filenameEdited === true && typeof state.filename === "string") {
+    filenameInput.value = state.filename;
+    filenameEdited = true;
+  }
 }
 
 function activateTab(name) {
@@ -113,6 +122,10 @@ tabButtons.forEach((btn) => {
 function render() {
   fileList.innerHTML = "";
   hint.style.display = files.length === 0 ? "block" : "none";
+
+  if (!filenameEdited) {
+    filenameInput.value = GcodeToolChange.computeCombinedFilename(files);
+  }
 
   files.forEach((file, index) => {
     const li = document.createElement("li");
@@ -243,11 +256,16 @@ saveBtn.addEventListener("click", () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "combined.gcode";
+  a.download = filenameInput.value.trim() || GcodeToolChange.computeCombinedFilename(files);
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+});
+
+filenameInput.addEventListener("input", () => {
+  filenameEdited = true;
+  saveState();
 });
 
 stripHeadersCheckbox.addEventListener("change", saveState);

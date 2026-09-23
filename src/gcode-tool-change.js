@@ -320,7 +320,50 @@
     return sections.join("\n") + "\n";
   }
 
-  const api = { generateCombinedGcode, detectToolNumber };
+  function stripExtension(name) {
+    const idx = name.lastIndexOf(".");
+    return idx > 0 ? name.slice(0, idx) : name;
+  }
+
+  // Longest common prefix of the given strings, backed off to the nearest
+  // " "/"-"/"_" boundary so it never splits a shared word or number in half
+  // (e.g. "test1"/"test2" or "testing"/"tester" share no whole token, so
+  // they yield "" rather than the misleading "test").
+  function commonPrefix(strings) {
+    if (strings.length === 0) return "";
+    if (strings.length === 1) return strings[0];
+    let prefix = strings[0];
+    for (const s of strings.slice(1)) {
+      let i = 0;
+      while (i < prefix.length && i < s.length && prefix[i] === s[i]) i++;
+      prefix = prefix.slice(0, i);
+      if (prefix === "") break;
+    }
+    if (/[^\s\-_]$/.test(prefix)) {
+      const sepIdx = Math.max(
+        prefix.lastIndexOf(" "),
+        prefix.lastIndexOf("-"),
+        prefix.lastIndexOf("_")
+      );
+      prefix = sepIdx === -1 ? "" : prefix.slice(0, sepIdx);
+    }
+    return prefix.replace(/[\s\-_]+$/, "");
+  }
+
+  // Default download filename: the input files' shared name prefix (if
+  // any), suffixed with "combined" — e.g. "test pocket.nc" + "test rough
+  // outline.nc" + "test final cut.nc" => "test combined.gcode".
+  function computeCombinedFilename(files) {
+    const names = (files || [])
+      .map((f) => f.name)
+      .filter(Boolean)
+      .map(stripExtension);
+    if (names.length === 0) return "combined.gcode";
+    const prefix = commonPrefix(names);
+    return `${prefix ? `${prefix} combined` : "combined"}.gcode`;
+  }
+
+  const api = { generateCombinedGcode, detectToolNumber, computeCombinedFilename };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;

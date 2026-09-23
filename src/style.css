@@ -150,8 +150,28 @@ button:disabled {
 
 .save-row {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 0.5rem;
   margin-top: 0.75rem;
+}
+
+.filename-input {
+  flex: 1;
+  min-width: 0;
+  max-width: 520px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+.filename-input:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 #save-btn {
