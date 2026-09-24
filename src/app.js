@@ -5,6 +5,7 @@ const dropzone = document.getElementById("dropzone");
 const fileList = document.getElementById("file-list");
 const hint = document.getElementById("hint");
 const processBtn = document.getElementById("process-btn");
+const clearBtn = document.getElementById("clear-btn");
 const saveBtn = document.getElementById("save-btn");
 const filenameInput = document.getElementById("filename-input");
 const output = document.getElementById("output");
@@ -13,6 +14,7 @@ const stripHeadersCheckbox = document.getElementById("opt-strip-headers");
 const removeCommentsCheckbox = document.getElementById("opt-remove-comments");
 const convertFastTravelCheckbox = document.getElementById("opt-convert-fast-travel");
 const insertAfterToolChangeInput = document.getElementById("opt-insert-after-tool-change");
+const resetOptionsBtn = document.getElementById("reset-options-btn");
 const warningModal = document.getElementById("warning-modal");
 const warningAgreeCheckbox = document.getElementById("warning-agree-checkbox");
 const warningContinueBtn = document.getElementById("warning-continue-btn");
@@ -22,6 +24,13 @@ let filenameEdited = false;
 
 const STORAGE_KEY = "cnc-gcode-editor:state";
 const WARNING_AGREED_KEY = "cnc-gcode-editor:warning-agreed";
+
+const DEFAULT_OPTIONS = {
+  stripDuplicateHeaders: true,
+  removeExtraComments: true,
+  convertToFastTravel: false,
+  insertAfterToolChange: "G20\nG90",
+};
 
 function hasAgreedToWarning() {
   try {
@@ -90,6 +99,8 @@ function loadState() {
     convertFastTravelCheckbox.checked = state.options.convertToFastTravel === true;
     if (typeof state.options.insertAfterToolChange === "string") {
       insertAfterToolChangeInput.value = state.options.insertAfterToolChange;
+    } else {
+      insertAfterToolChangeInput.value = DEFAULT_OPTIONS.insertAfterToolChange;
     }
   }
 
@@ -248,6 +259,14 @@ processBtn.addEventListener("click", () => {
   activateTab("result");
 });
 
+clearBtn.addEventListener("click", () => {
+  files.length = 0;
+  output.value = "";
+  filenameEdited = false;
+  render();
+  saveState();
+});
+
 saveBtn.addEventListener("click", () => {
   const content = output.value;
   if (!content.trim()) return;
@@ -265,6 +284,14 @@ saveBtn.addEventListener("click", () => {
 
 filenameInput.addEventListener("input", () => {
   filenameEdited = true;
+  saveState();
+});
+
+resetOptionsBtn.addEventListener("click", () => {
+  stripHeadersCheckbox.checked = DEFAULT_OPTIONS.stripDuplicateHeaders;
+  removeCommentsCheckbox.checked = DEFAULT_OPTIONS.removeExtraComments;
+  convertFastTravelCheckbox.checked = DEFAULT_OPTIONS.convertToFastTravel;
+  insertAfterToolChangeInput.value = DEFAULT_OPTIONS.insertAfterToolChange;
   saveState();
 });
 

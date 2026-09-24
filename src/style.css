@@ -148,6 +148,17 @@ button:disabled {
   width: 100%;
 }
 
+.secondary-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  background: transparent;
+  color: var(--text);
+}
+
+.secondary-btn:hover {
+  background: var(--border);
+}
+
 .save-row {
   display: flex;
   align-items: center;
@@ -226,6 +237,19 @@ button:disabled {
 .tab-empty {
   color: #888;
   margin: 0.5rem 0;
+}
+
+.options-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.options-header .secondary-btn {
+  width: auto;
+  margin-top: 0;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.9rem;
 }
 
 .option-row {

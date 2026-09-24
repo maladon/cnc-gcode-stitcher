@@ -52,6 +52,7 @@
 
       <div class="side-controls">
         <button id="process-btn" title="Combine the files above into one G-code program with tool-change commands inserted.">Process</button>
+        <button id="clear-btn" class="secondary-btn" title="Empty the result and remove all loaded files.">Clear</button>
       </div>
     </div>
 
@@ -72,6 +73,9 @@
       </div>
 
       <div class="tab-panel" id="tab-options" role="tabpanel" hidden>
+        <div class="options-header">
+          <button id="reset-options-btn" class="secondary-btn" type="button" title="Restore all options below to their default values.">Reset to defaults</button>
+        </div>
         <label class="option-row" title="Only the first file keeps its full post-processor header (program name, tool note, units/plane setup). Later files start at their own operation instead of repeating it.">
           <input type="checkbox" id="opt-strip-headers" checked />
           Strip duplicate headers
