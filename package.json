@@ -7,5 +7,5 @@
     "start": "npx serve .",
     "test": "node test/run.js"
   },
-  "license": "UNLICENSED"
+  "license": "MIT"
 }

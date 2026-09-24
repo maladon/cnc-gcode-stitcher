@@ -171,4 +171,4 @@ test files/               Sample .nc files used for manual/regression testing
 
 ## License
 
-UNLICENSED — all rights reserved. See `package.json`.
+MIT — see [`LICENSE`](LICENSE).
