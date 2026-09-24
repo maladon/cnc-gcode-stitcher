@@ -113,8 +113,13 @@ moving quickly. This option tries to detect and restore those moves back to
 `G0`.
 
 It uses a conservative rule: only Z-only moves that retract upward, or X/Y
-moves made immediately after such a retract, are reclassified. Every plunge
-and every arc is left untouched. This is a heuristic based on move geometry,
+moves made immediately after such a retract, are reclassified — and only if
+Z is at or above the operation's retract height. That last check keeps tab
+hops (a small lift over a holding tab while still at cutting depth) as fed
+moves. The retract height is detected from each operation's approach: the
+first downward Z move after a `G0` is taken as the retract height, and until
+one is found nothing in that operation is converted. Every plunge and every
+arc is left untouched. This is a heuristic based on move geometry,
 not a true understanding of your toolpath — review the converted moves
 before trusting them. Off by default.
 

@@ -198,6 +198,22 @@
   // real cut and is left untouched, since misclassifying a plunge as a
   // rapid could crash the tool into the material.
   //
+  // On top of that, a move is only restored to a rapid if Z is at or above
+  // the operation's retract height — the Z retract target for a Z-only
+  // move, the current Z for an X/Y move. Without this, a tab hop (lift a
+  // few hundredths off the floor, traverse over the tab, drop back down)
+  // looks exactly like a retract-then-reposition and would rapid along the
+  // cut at cutting depth. The retract height isn't written anywhere in the
+  // file, so it's inferred from the approach every operation starts with:
+  // a true G0 (to clearance), then a descent to retract height — a real
+  // G0 on unrestricted posts, a throttled G1 under Personal Use — then the
+  // feed down into the cut. The first Z-only descent after any G0 is taken
+  // as the retract height. If that guess is wrong it can only be too HIGH
+  // (e.g. a clearance move when the machine started above clearance),
+  // which just means fewer conversions. Until one is detected — and again
+  // after every G0, since the next operation may use a different height —
+  // nothing is converted.
+  //
   // sourceMotion tracks the modal state the ORIGINAL file is actually in
   // (used to classify each move), separately from outputMotion, the modal
   // state our REWRITTEN lines leave the controller in. They diverge the
@@ -212,6 +228,8 @@
     let outputMotion = null;
     let currentZ = null;
     let rapid = false;
+    let retractHeight = null;
+    let awaitingRetract = false;
 
     return lines.map((line) => {
       const code = codeOnly(line);
@@ -225,16 +243,44 @@
       const hasX = /\bX-?\d*\.?\d+/i.test(code);
       const hasY = /\bY-?\d*\.?\d+/i.test(code);
       const newZ = zMatch ? parseFloat(zMatch[1]) : null;
+      const isZOnly = zMatch && !hasX && !hasY;
+
+      if (sourceMotion === "0") {
+        retractHeight = null;
+        awaitingRetract = true;
+      }
+      if (awaitingRetract) {
+        const straight = sourceMotion === "0" || sourceMotion === "1";
+        if (straight && isZOnly && currentZ !== null && newZ < currentZ) {
+          retractHeight = newZ;
+          awaitingRetract = false;
+        } else if (sourceMotion !== "0" && (hasX || hasY)) {
+          // The approach ended (a cut started) without a recognizable
+          // descent to retract height, so leave this operation unconverted.
+          awaitingRetract = false;
+        }
+      }
 
       let outLine = line;
       let emittedMotion = sourceMotion;
 
       if (sourceMotion === "1") {
         let convert = false;
-        if (zMatch && !hasX && !hasY) {
-          convert = currentZ !== null && newZ > currentZ;
+        if (isZOnly) {
+          convert =
+            currentZ !== null &&
+            newZ > currentZ &&
+            retractHeight !== null &&
+            newZ >= retractHeight;
           rapid = convert;
-        } else if (!zMatch && (hasX || hasY) && rapid) {
+        } else if (
+          !zMatch &&
+          (hasX || hasY) &&
+          rapid &&
+          retractHeight !== null &&
+          currentZ !== null &&
+          currentZ >= retractHeight
+        ) {
           convert = true;
         } else {
           rapid = false;
