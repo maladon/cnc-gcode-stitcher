@@ -51,12 +51,20 @@
   // exact cause of the "target exceeds machine travel" alarm seen with
   // mixed units. It's configurable since what's needed here depends on the
   // controller/sender combination.
+  //
+  // An explicit M5 is emitted on the line before every tool change. Each
+  // source file's own M5 lives in its end-of-program block, which is
+  // stripped between files, so without this the spindle would still be
+  // commanded on from the previous file when the change starts.
   function appendM6ToToolCommands(content, insertLines) {
     const toInsert =
       insertLines && insertLines.length ? insertLines : DEFAULT_INSERT_AFTER_TOOL_CHANGE;
     const result = [];
     for (const line of content.split(/\r\n|\r|\n/)) {
       const transformed = splitCodeAndComment(line);
+      if (transformed !== line) {
+        result.push("M5");
+      }
       result.push(transformed);
       if (transformed !== line) {
         toInsert.forEach((l) => result.push(l));

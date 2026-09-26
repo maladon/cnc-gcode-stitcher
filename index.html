@@ -108,7 +108,7 @@ G90</textarea>
         <ol>
           <li>Drag your G-code files onto the box on the left, or click it to pick files. Each file should already contain the correct tool number for its own operation (whatever your CAM post-processor put there) — that's what this tool reads, it doesn't assign tool numbers itself.</li>
           <li>Drag the entries in the list to set the order the files should run in.</li>
-          <li>Click <strong>Process</strong>. Each file's existing tool-select line (e.g. <code>T2</code>) gets <code>M6</code> appended to it so grblHAL actually performs the change, and the files are stitched into one continuous program with a single end-of-program block at the very end instead of one per file.</li>
+          <li>Click <strong>Process</strong>. Each file's existing tool-select line (e.g. <code>T2</code>) gets <code>M6</code> appended to it so grblHAL actually performs the change, with an <code>M5</code> on the line before it to stop the spindle, and the files are stitched into one continuous program with a single end-of-program block at the very end instead of one per file.</li>
           <li>The result appears in the <strong>Result</strong> tab as editable text — check it over, then click <strong>Download</strong> to download it as a <code>.gcode</code> file.</li>
         </ol>
         <p>Your file list and option settings are remembered in this browser between visits, so you don't need to re-upload or re-configure every time.</p>

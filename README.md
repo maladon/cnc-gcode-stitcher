@@ -31,7 +31,8 @@ that stitching:
   post-processor already wrote.
 - It appends `M6` to that tool-select line so the controller actually
   performs the change (rather than just registering the pending tool),
-  and inserts a configurable block of G-code right after each tool change
+  puts an `M5` (spindle stop) on the line before it, and inserts a
+  configurable block of G-code right after each tool change
   (defaulting to `G20`/`G90` — see below for why).
 - It concatenates the files in whatever order you arrange them, optionally
   stripping the redundant per-file headers and descriptive comments so the
@@ -74,9 +75,10 @@ one-time modal the first time you open it.
    tool reads that tool number; it does not assign one.
 2. Drag the entries in the file list to set the order they should run in.
 3. Click **Process**. For each file, the existing tool-select line (e.g.
-   `T2`) gets `M6` appended to it so the controller performs the change, and
-   the configured "insert after tool change" commands are emitted right
-   after it. The files are then stitched into a single continuous program
+   `T2`) gets `M6` appended to it so the controller performs the change, an
+   `M5` is emitted on the line before it to stop the spindle, and the
+   configured "insert after tool change" commands are emitted right after
+   it. The files are then stitched into a single continuous program
    with one end-of-program block at the very end, instead of one per file.
 4. The result appears in the **Result** tab as editable plain text — review
    it, make any manual edits directly in the textarea if needed, then click
